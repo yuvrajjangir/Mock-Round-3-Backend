@@ -3,15 +3,31 @@ const jwt = require('jsonwebtoken');
 
 const getAllDoctors = async (req, res) => {
     try {
-        const {authorization} = req.headers;
-        const doctors = await Doctor.find();
+        const { authorization } = req.headers;
+        let query = {};
+
+        // Filter by Specialization
+        if (req.query.specialization) {
+            query.specialization = req.query.specialization;
+        }
+
+        // Sort by date
+        if (req.query.sort === 'date') {
+            query = { ...query, $orderby: { date: -1 } };
+        }
+
+        // Search by doctor name
+        if (req.query.search) {
+            query.name = { $regex: req.query.search, $options: 'i' };
+        }
+
+        const doctors = await Doctor.find(query);
         res.json(doctors);
     } catch (error) {
         console.error(error);
-        res.status(500).json({message: 'Server error'});
+        res.status(500).json({ message: 'Server error' });
     }
 };
-
 const addDoctor = async (req, res) => {
     try {
         const newDoctor =  new Doctor(req.body);
